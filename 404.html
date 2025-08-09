@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重定向中...</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            text-align: center;
+            padding: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 600px;
+            margin: 0 auto;
+            color: #333;
+        }
+        h1 {
+            color: #667eea;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 重定向中...</h1>
+        <div class="loader"></div>
+        <p>正在处理您的请求，请稍候</p>
+        <div id="error" style="color: #e74c3c; display: none; margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        // 复制原文件中的解码函数
+        function iIToBinary(iIString) {
+            return iIString.split('').map(char => char === 'i' ? '0' : '1').join('');
+        }
+
+        function binaryToString(binary) {
+            const chunks = binary.match(/.{8}/g) || [];
+            return chunks.map(chunk => {
+                return String.fromCharCode(parseInt(chunk, 2));
+            }).join('');
+        }
+
+        function decodeFromiI(iIString) {
+            try {
+                const binary = iIToBinary(iIString);
+                const jsonString = binaryToString(binary);
+                return JSON.parse(jsonString);
+            } catch (error) {
+                console.error('解码失败:', error);
+                return null;
+            }
+        }
+
+        function extractEncodedFromPath(path) {
+            return path.replace(/\//g, '');
+        }
+
+        // 处理重定向逻辑
+        function handleRedirection() {
+            const path = window.location.pathname;
+            if (path === '/' || path.length < 10) {
+                // 如果是首页，跳回主应用
+                window.location.href = '/';
+                return;
+            }
+
+            try {
+                const encoded = extractEncodedFromPath(path);
+                const decoded = decodeFromiI(encoded);
+                
+                if (decoded && decoded.url) {
+                    // 成功解码，重定向到目标URL
+                    window.location.href = decoded.url;
+                } else {
+                    showError('无效链接：解码失败');
+                }
+            } catch (error) {
+                showError('链接格式错误: ' + error.message);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+            document.querySelector('.loader').style.display = 'none';
+        }
+
+        // 页面加载后立即处理
+        window.addEventListener('DOMContentLoaded', handleRedirection);
+    </script>
+</body>
+</html>
